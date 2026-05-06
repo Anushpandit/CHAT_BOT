@@ -1,0 +1,15 @@
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+groq
+python-dotenv
+PyMuPDF
+pytesseract>=0.3.10
+Pillow>=10.0.0
+python-docx>=1.1.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+sentence-transformers>=2.7.0
+torch>=2.0.0
+chromadb>=0.5.0
+numpy>=1.24.0
