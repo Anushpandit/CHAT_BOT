@@ -72,11 +72,17 @@ def store_chunks(
 
     ids, texts, embeddings, metadatas = [], [], [], []
     skipped = 0
+    seen_in_batch = set()
 
     for chunk, embedding in chunk_embedding_pairs:
         if chunk.chunk_id in existing_ids:
             skipped += 1
             continue
+        if chunk.chunk_id in seen_in_batch:
+            skipped += 1
+            continue
+            
+        seen_in_batch.add(chunk.chunk_id)
         ids.append(chunk.chunk_id)
         texts.append(chunk.text)
         embeddings.append(embedding)

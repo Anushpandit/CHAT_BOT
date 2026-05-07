@@ -104,6 +104,8 @@ def _split_spreadsheet(text: str, rows_per_chunk: int = 50) -> List[str]:
 # Public API
 # ─────────────────────────────────────────────
 
+import hashlib
+
 def chunk_content(
     file_name: str,
     file_type: str,
@@ -130,9 +132,12 @@ def chunk_content(
     # Build TextChunk objects
     result: List[TextChunk] = []
     total = len(raw_chunks)
+    
+    # Hash the text to ensure uniqueness if multiple files have the same name
+    file_hash = hashlib.md5(text.encode("utf-8", errors="ignore")).hexdigest()[:6]
 
     for idx, chunk_text in enumerate(raw_chunks):
-        chunk_id = f"{file_name}_chunk_{idx:04d}"
+        chunk_id = f"{file_name}_{file_hash}_chunk_{idx:04d}"
         result.append(
             TextChunk(
                 chunk_id=chunk_id,
