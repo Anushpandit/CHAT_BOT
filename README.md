@@ -10,11 +10,13 @@ Unlike standard text-based RAG systems, DriveChat is **Multi-Modal**. It can rea
 
 - **📂 Seamless Google Drive Integration:** Simply paste a Google Drive folder or file link. The backend securely authenticates, recursively traverses folders, and downloads files for indexing.
 - **💻 Local File Uploads:** Drop files directly from your computer into the web UI for instant processing.
+- **🗣️ Voice & Text-to-Speech (TTS):** Native browser `window.speechSynthesis` integration for zero-latency AI voice output, featuring a curated list of high-quality premium voices.
+- **🔒 Multi-Tenant Google OAuth:** Enterprise-grade security with `@react-oauth/google` and backend session isolation. Each user only sees their own private document chats.
 - **👁️ Multi-Modal Vision Extraction:** Uses `Llama-3.2-Vision` (via Groq) to analyze images and diagrams. If vision fails, it falls back to native Tesseract OCR.
 - **📊 Native Spreadsheet & Word Parsing:** Intelligently reads `.xlsx`, `.csv`, and `.docx` files, preserving tabular structures so the LLM can answer data-driven questions.
 - **⚡ Ultra-Fast Inference:** Powered by Groq's LPU hardware, fetching answers from `Llama-3.3-70B` or `Mixtral-8x7B` in milliseconds.
-- **🧠 Semantic Vector Search:** Chunks and embeds documents using `sentence-transformers` (`all-MiniLM-L6-v2`) and stores them locally in **ChromaDB**.
-- **🎨 Modern React UI:** A sleek, responsive chat interface featuring interactive source-tag citations, document-specific filtering, and dynamic Markdown rendering.
+- **🧠 Semantic Vector Search:** Chunks and embeds documents using `sentence-transformers` (`all-MiniLM-L6-v2`) and stores them locally in **ChromaDB** with auto-renamed SQLite chat history.
+- **🎨 Premium UI/UX:** A stunning Light Mode aesthetic with modern typography (`Inter`), custom logos, hover-responsive destructive buttons, and interactive source citations.
 
 ---
 
@@ -91,7 +93,11 @@ npm install
    ```env
    GROQ_API_KEY=your_groq_api_key_here
    ```
-2. **Google Drive Auth:** To use the Drive link ingestion, you need Google Cloud credentials. Place your `service_account.json` OR OAuth `credentials.json` in the root folder.
+2. Create a `.env` file in the `frontend/` directory for Google Auth:
+   ```env
+   VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id_here
+   ```
+3. **Google Drive Auth:** To use the Drive link ingestion, you need Google Cloud credentials. Place your `service_account.json` OR OAuth `credentials.json` in the root folder.
 
 ---
 
