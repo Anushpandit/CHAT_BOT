@@ -3,6 +3,7 @@ import io
 import json
 import logging
 from typing import List, Optional, Dict, Any
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -54,6 +55,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from citation_router import router as citation_router
+app.include_router(citation_router)
 
 
 # ─────────────────────────────────────────────

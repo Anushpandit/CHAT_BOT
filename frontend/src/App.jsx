@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
+import CitationPanel from "./CitationPanel";
 
 const API = "http://localhost:8000";
 
@@ -72,15 +73,19 @@ const Msg = ({ m, msgId, activeSpeechId, onSpeak, onStop }) => {
         </div>
       )}
       <div style={{maxWidth:"74%",display:"flex",flexDirection:"column",gap:5}}>
-        <div style={{
-          padding:"10px 15px",
-          borderRadius:isUser?"16px 16px 4px 16px":"16px 16px 16px 4px",
-          background:isUser?"var(--accent)":"var(--surface2)",
-          color:isUser?"#fff":"var(--text)",fontSize:14,lineHeight:1.65,
-          whiteSpace:"pre-wrap",wordBreak:"break-word",
-          border:isUser?"none":"1px solid var(--border)",
-          boxShadow:isUser?"0 2px 14px rgba(99,102,241,.3)":"0 1px 3px rgba(0,0,0,.1)",
-        }}>{m.content}</div>
+        {isUser ? (
+          <div style={{
+            padding:"10px 15px",
+            borderRadius:"16px 16px 4px 16px",
+            background:"var(--accent)",
+            color:"#fff",fontSize:14,lineHeight:1.65,
+            whiteSpace:"pre-wrap",wordBreak:"break-word",
+            border:"none",
+            boxShadow:"0 2px 14px rgba(99,102,241,.3)",
+          }}>{m.content}</div>
+        ) : (
+          <CitationPanel answer={m.content} citations={m.citations || []} />
+        )}
 
         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
           {m.sources?.map(s=>(
@@ -329,14 +334,16 @@ function MainApp({ user, onLogout }) {
     setLoading(true);
 
     try {
-      const r = await fetch(`${API}/sessions/${activeId}/chat`, {
+      const historyPayload = messages.map(m => ({ role: m.role, content: m.content })).slice(-10);
+      const r = await fetch(`${API}/chat/cited`, {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ question: text, model, enable_tts: ttsEnabled, voice }),
+        body: JSON.stringify({ question: text, session_id: activeId, history: historyPayload, model }),
       });
       const d = await r.json();
       if (r.ok) {
         const newAssistantMsg = {
           role:"assistant", content: d.answer,
+          citations: d.citations,
           sources: d.sources, chunks_used: d.chunks_used,
           prompt_tokens: d.usage?.prompt_tokens,
           completion_tokens: d.usage?.completion_tokens,
