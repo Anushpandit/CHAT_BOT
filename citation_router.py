@@ -10,6 +10,7 @@ New endpoints:
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict
+import asyncio
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -26,6 +27,8 @@ class CitedChatRequest(BaseModel):
     model: str = "llama-3.3-70b-versatile"
     top_k: int = 6
     filter_file: Optional[str] = None
+    enable_followups: bool = True
+    followup_model: str = "llama-3.1-8b-instant"
 
 class CitationOut(BaseModel):
     quote: str
@@ -43,6 +46,7 @@ class CitedChatResponse(BaseModel):
     sources: List[str]
     chunks_used: int
     model: str
+    followups: List[str] = []
 
 
 # ─────────────────────────────────────────────
@@ -77,13 +81,45 @@ async def chat_with_citations_endpoint(req: CitedChatRequest):
     )
     relevant = [c for c in chunks if c["score"] >= 0.25]
 
-    # Get cited answer
-    cited = chat_with_citations(
-        question=req.question,
-        chat_history=req.history,
-        retrieved_chunks=relevant,
-        model=req.model,
+    # Run main citation and follow-ups in parallel
+    loop = asyncio.get_event_loop()
+    from followup_generator import generate_followup_suggestions
+
+    main_task = loop.run_in_executor(
+        None,
+        lambda: chat_with_citations(
+            question=req.question,
+            chat_history=req.history,
+            retrieved_chunks=relevant,
+            model=req.model,
+        )
     )
+
+    followup_task = loop.run_in_executor(
+        None,
+        lambda: generate_followup_suggestions(
+            question=req.question,
+            answer="",
+            context_chunks=relevant,
+            model=req.followup_model,
+        )
+    ) if req.enable_followups else None
+
+    cited = await main_task
+    
+    if req.enable_followups:
+        # regenerate with the actual answer for better quality
+        followups = await loop.run_in_executor(
+            None,
+            lambda: generate_followup_suggestions(
+                question=req.question,
+                answer=cited.answer,
+                context_chunks=relevant,
+                model=req.followup_model,
+            )
+        )
+    else:
+        followups = []
 
     formatted = format_citations(cited)
     sources = list({c["file"] for c in formatted["citations"]})
@@ -95,6 +131,7 @@ async def chat_with_citations_endpoint(req: CitedChatRequest):
         sources=sources,
         chunks_used=len(relevant),
         model=req.model,
+        followups=followups,
     )
 
 

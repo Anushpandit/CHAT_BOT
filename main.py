@@ -59,6 +59,9 @@ app.add_middleware(
 from citation_router import router as citation_router
 app.include_router(citation_router)
 
+from followup_router import router as followup_router
+app.include_router(followup_router)
+
 
 # ─────────────────────────────────────────────
 # Pydantic schemas

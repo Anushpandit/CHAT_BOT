@@ -15,6 +15,7 @@ Unlike standard text-based RAG systems, DriveChat is **Multi-Modal**. It can rea
 - **⚡ Ultra-Fast Inference:** Powered by Groq's LPU hardware, fetching answers from `Llama-3.3-70B` or `Mixtral-8x7B` in milliseconds.
 - **🧠 Semantic Vector Search:** Chunks and embeds documents using `sentence-transformers` (`all-MiniLM-L6-v2`) and stores them locally in **ChromaDB**.
 - **🔍 Verbatim Quotes & Citations:** Employs a specialized extractor to retrieve exact word-for-word quotes from your documents and highlights them interactively on the frontend with visual badges.
+- **✨ Smart Follow-Up Suggestions:** Automatically generates context-aware, clickable follow-up questions in parallel with the main response, ensuring an engaging conversational flow without added latency.
 - **🎨 Modern React UI:** A sleek, responsive chat interface featuring interactive source-tag citations, document-specific filtering, and dynamic Markdown rendering.
 
 ---
@@ -55,8 +56,8 @@ DriveChat operates in 4 distinct phases under the hood:
 3. **Phase 3: Ingestion & Vectorization (`chunker.py`, `embedder.py`, `vector_store.py`)** 
    Text is intelligently chunked with dynamic overlap to preserve context. Chunks are hashed (MD5) to prevent duplicates, embedded into numerical vectors, and persisted to `./chroma_db`.
 
-4. **Phase 4: Chatbot & API (`main.py`, `chatbot.py`, `citation_extractor.py`)** 
-   The FastAPI layer orchestrates the retrieval. When a user asks a question, the backend embeds the query, searches ChromaDB for the Top-K chunks, and constructs a strict prompt for the LLM. A specialized `citation_extractor` identifies exact verbatim quotes within the chunks and maps their character coordinates. It returns the answer along with inline citation badges and mapped source highlights for the frontend UI.
+4. **Phase 4: Chatbot & API (`main.py`, `chatbot.py`, `citation_extractor.py`, `followup_generator.py`)** 
+   The FastAPI layer orchestrates the retrieval. When a user asks a question, the backend embeds the query, searches ChromaDB for the Top-K chunks, and constructs a strict prompt for the LLM. A specialized `citation_extractor` identifies exact verbatim quotes within the chunks and maps their character coordinates. Simultaneously, the `followup_generator` asynchronously formulates relevant follow-up questions. It returns the answer along with inline citation badges, mapped source highlights, and follow-up suggestions for the frontend UI.
 
 ---
 

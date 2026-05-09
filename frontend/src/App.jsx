@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from "jwt-decode";
 import CitationPanel from "./CitationPanel";
+import FollowupSuggestions from "./FollowupSuggestions";
 
 const API = "http://localhost:8000";
 
@@ -337,7 +338,14 @@ function MainApp({ user, onLogout }) {
       const historyPayload = messages.map(m => ({ role: m.role, content: m.content })).slice(-10);
       const r = await fetch(`${API}/chat/cited`, {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ question: text, session_id: activeId, history: historyPayload, model }),
+        body: JSON.stringify({ 
+          question: text, 
+          session_id: activeId, 
+          history: historyPayload, 
+          model,
+          enable_followups: true,
+          followup_model: "llama-3.1-8b-instant"
+        }),
       });
       const d = await r.json();
       if (r.ok) {
@@ -347,6 +355,7 @@ function MainApp({ user, onLogout }) {
           sources: d.sources, chunks_used: d.chunks_used,
           prompt_tokens: d.usage?.prompt_tokens,
           completion_tokens: d.usage?.completion_tokens,
+          followups: d.followups,
           id: d.message_id || Date.now(), // Fallback if no ID
         };
         setMessages(prev => [...prev, newAssistantMsg]);
@@ -715,7 +724,16 @@ function MainApp({ user, onLogout }) {
             ) : (
               <>
                 {messages.map((m,i)=>(
-                  <Msg key={i} m={m} msgId={m.id || i} activeSpeechId={activeSpeechId} onSpeak={speakText} onStop={stopSpeech} />
+                  <div key={i}>
+                    <Msg m={m} msgId={m.id || i} activeSpeechId={activeSpeechId} onSpeak={speakText} onStop={stopSpeech} />
+                    {!loading && m.role === "assistant" && i === messages.length - 1 && (
+                      <FollowupSuggestions
+                        suggestions={m.followups || []}
+                        onSelect={sendMessage}
+                        isLoading={false}
+                      />
+                    )}
+                  </div>
                 ))}
                 {loading && (
                   <div style={{display:"flex",alignItems:"flex-start",marginBottom:16}}>
@@ -729,6 +747,12 @@ function MainApp({ user, onLogout }) {
                       <Dots/>
                     </div>
                   </div>
+                )}
+                {loading && (
+                  <FollowupSuggestions
+                    suggestions={[]}
+                    isLoading={true}
+                  />
                 )}
                 <div ref={bottomRef}/>
               </>
